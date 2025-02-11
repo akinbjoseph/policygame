@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Water Policy Reform Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Press Start 2P', cursive;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #111;
+            padding: 20px;
+            border: 4px solid #0f0;
+            border-radius: 8px;
+        }
+
+        .screen {
+            display: none;
+            padding: 20px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .title {
+            text-align: center;
+            color: #0f0;
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-shadow: 2px 2px #000;
+        }
+
+        .score-display {
+            text-align: right;
+            margin-bottom: 20px;
+            color: #ff0;
+        }
+
+        .choice-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: #222;
+            border: 2px solid #0f0;
+            color: #0f0;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .choice-btn:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #222;
+            border: 2px solid #0f0;
+            margin: 20px 0;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background-color: #0f0;
+            transition: width 0.5s;
+        }
+
+        .pixel-art {
+            image-rendering: pixelated;
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+            background-color: #222;
+        }
+
+        .message-box {
+            border: 2px solid #0f0;
+            padding: 10px;
+            margin: 10px 0;
+            min-height: 100px;
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="score-display">Score: <span id="score">0</span></div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+
+        <div class="screen active" id="start-screen">
+            <h1 class="title">Water Policy Reform Adventure</h1>
+            <div class="message-box">
+                Welcome, Policy Reformer! Your mission is to improve water management in the Kaveri Basin. Make the right choices to implement effective reforms.
+            </div>
+            <button class="choice-btn" onclick="startGame()">START MISSION</button>
+        </div>
+
+        <div class="screen" id="game-screen">
+            <h2 class="title" id="scenario-title">Challenge 1</h2>
+            <div class="pixel-art" id="scenario-image"></div>
+            <div class="message-box" id="scenario-text"></div>
+            <div id="choices"></div>
+        </div>
+
+        <div class="screen" id="end-screen">
+            <h2 class="title">Mission Complete!</h2>
+            <div class="message-box" id="final-message"></div>
+            <button class="choice-btn" onclick="resetGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = [
+            {
+                title: "Water Management Challenge",
+                text: "The Kaveri Basin faces severe water distribution inequity. What's your first reform approach?",
+                image: "dam",
+                choices: [
+                    {
+                        text: "Establish Watershed Community Councils (WCCs)",
+                        correct: true,
+                        feedback: "Excellent! WCCs will bring together stakeholders across state boundaries.",
+                        points: 20
+                    },
+                    {
+                        text: "Maintain current state-level management",
+                        correct: false,
+                        feedback: "Current state-centric approach has led to conflicts and inefficiencies.",
+                        points: 0
+                    }
+                ]
+            },
+            {
+                title: "Technology Integration",
+                text: "Farmers report inconsistent water availability. How will you monitor water distribution?",
+                image: "sensors",
+                choices: [
+                    {
+                        text: "Deploy IoT sensors and monitoring system",
+                        correct: true,
+                        feedback: "Perfect! Smart monitoring will ensure transparent water management.",
+                        points: 20
+                    },
+                    {
+                        text: "Rely on manual reporting system",
+                        correct: false,
+                        feedback: "Manual systems are prone to delays and errors.",
+                        points: 0
+                    }
+                ]
+            },
+            {
+                title: "Water Rights Reform",
+                text: "Water allocation is inefficient between regions. What's your solution?",
+                image: "market",
+                choices: [
+                    {
+                        text: "Implement water trading system",
+                        correct: true,
+                        feedback: "Great choice! A formal water market will optimize resource allocation.",
+                        points: 20
+                    },
+                    {
+                        text: "Keep fixed water allocation treaties",
+                        correct: false,
+                        feedback: "Fixed treaties don't adapt to changing needs and conditions.",
+                        points: 0
+                    }
+                ]
+            }
+        ];
+
+        let currentScenario = 0;
+        let score = 0;
+
+        function startGame() {
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('game-screen').classList.add('active');
+            loadScenario();
+        }
+
+        function loadScenario() {
+            const scenario = scenarios[currentScenario];
+            document.getElementById('scenario-title').textContent = scenario.title;
+            document.getElementById('scenario-text').textContent = scenario.text;
+            
+            const choicesDiv = document.getElementById('choices');
+            choicesDiv.innerHTML = '';
+            
+            scenario.choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-btn';
+                button.textContent = choice.text;
+                button.onclick = () => makeChoice(index);
+                choicesDiv.appendChild(button);
+            });
+
+            updateProgress();
+        }
+
+        function makeChoice(choiceIndex) {
+            const scenario = scenarios[currentScenario];
+            const choice = scenario.choices[choiceIndex];
+            
+            score += choice.points;
+            document.getElementById('score').textContent = score;
+            
+            document.getElementById('scenario-text').textContent = choice.feedback;
+
+            setTimeout(() => {
+                currentScenario++;
+                if (currentScenario < scenarios.length) {
+                    loadScenario();
+                } else {
+                    updateProgress();  // Update progress one last time
+                    endGame();
+                }
+            }, 2000);
+        }
+
+        function updateProgress() {
+            const progress = (currentScenario / scenarios.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+            
+            // When game is complete, ensure progress bar is at 100%
+            if (currentScenario === scenarios.length) {
+                document.getElementById('progress').style.width = '100%';
+            }
+        }
+
+        function endGame() {
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('end-screen').classList.add('active');
+            
+            const finalMessage = document.getElementById('final-message');
+            if (score >= 50) {
+                finalMessage.textContent = "Congratulations! Your policy reforms will help create a more equitable water management system in the Kaveri Basin!";
+            } else {
+                finalMessage.textContent = "Your reforms might need some reconsideration. Try again to create better water management policies!";
+            }
+        }
+
+        function resetGame() {
+            currentScenario = 0;
+            score = 0;
+            document.getElementById('score').textContent = score;
+            document.getElementById('end-screen').classList.remove('active');
+            document.getElementById('start-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>
